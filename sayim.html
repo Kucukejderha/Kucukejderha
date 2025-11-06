@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barkod ile Sayım Uygulaması</title>
+    <title>Barkod ile Sayım Uygulaması - v1.0.0</title>
     <style>
         :root {
             --primary-color: #007bff;
@@ -14,165 +14,53 @@
             --dark-color: #343a40;
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: var(--font-family);
-            margin: 0;
-            padding: 15px;
-            background-color: #e9ecef;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        h1, h2 {
-            text-align: center;
-            color: var(--dark-color);
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
-        h2 {
-            font-size: 1.2em;
-            border-bottom: 1px solid #ccc;
-        }
-
-        #scanner-container {
-            position: relative;
-            width: 100%;
-            margin: 20px auto;
-            border-radius: 8px;
-            overflow: hidden; /* Ensures the video respects the border-radius */
-            border: 3px dashed var(--secondary-color);
-        }
-        #scanner-container video {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
+        * { box-sizing: border-box; }
+        body { font-family: var(--font-family); margin: 0; padding: 15px; background-color: #e9ecef; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: var(--dark-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-top: 0; }
+        h2 { font-size: 1.2em; border-bottom: 1px solid #ccc; }
+        #scanner-container { position: relative; width: 100%; margin: 20px auto; border-radius: 8px; overflow: hidden; border: 3px dashed var(--secondary-color); }
+        #scanner-container video { width: 100%; height: auto; display: block; }
         .controls, .results { margin-top: 20px; }
         .hidden { display: none; }
-
-        /* Custom File Input */
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        .file-input-wrapper input[type=file] {
-            font-size: 100px;
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-        .file-input-button {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            text-align: center;
-            font-size: 16px;
-            display: block;
-        }
-        .file-input-wrapper:hover .file-input-button {
-            background-color: #0056b3;
-        }
-
-        button {
-            background-color: var(--success-color);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 18px;
-            padding: 15px;
-            width: 100%;
-            border-radius: 5px;
-            margin-top: 10px;
-            transition: background-color 0.2s;
-        }
-        button:hover {
-            opacity: 0.9;
-        }
-
-        .results h2 {
-            margin-bottom: 15px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        th, td {
-            border: 1px solid #dee2e6;
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-            font-weight: 600;
-        }
-        tbody tr:nth-child(odd) {
-            background-color: var(--light-color);
-        }
-
-        #product-info {
-            text-align: center;
-            margin: 20px 0;
-            padding: 15px;
-            font-size: 1.1em;
-            color: var(--dark-color);
-            background-color: var(--light-color);
-            border-radius: 5px;
-        }
-        #previous-count {
-            color: var(--danger-color);
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-        .footer {
-            text-align: right;
-            margin-top: 20px;
-            font-size: 0.8em;
-            color: var(--secondary-color);
-        }
+        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; margin-bottom: 15px; }
+        .file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
+        .file-input-button { background-color: var(--primary-color); color: white; padding: 12px 20px; border-radius: 5px; border: none; cursor: pointer; text-align: center; font-size: 16px; display: block; }
+        .file-input-wrapper:hover .file-input-button { background-color: #0056b3; }
+        button { background-color: var(--success-color); color: white; border: none; cursor: pointer; font-size: 18px; padding: 15px; width: 100%; border-radius: 5px; margin-top: 10px; transition: background-color 0.2s; }
+        button:hover { opacity: 0.9; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: 600; }
+        tbody tr:nth-child(odd) { background-color: var(--light-color); }
+        #product-info { text-align: center; margin: 20px 0; padding: 15px; font-size: 1.1em; color: var(--dark-color); background-color: var(--light-color); border-radius: 5px; }
+        #previous-count { color: var(--danger-color); font-weight: bold; font-size: 1.2em; }
+        .footer { text-align: right; margin-top: 20px; font-size: 0.8em; color: var(--secondary-color); }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Barkod ile Sayım</h1>
-
-        <div id="scanner-section">
-            <h2>1. Barkod Okutun</h2>
+        <div class="controls">
+            <div class="file-input-wrapper">
+                <div class="file-input-button">1. Ürün Listenizi (Excel) Yükleyin</div>
+                <input type="file" id="file-input" accept=".xlsx, .xls">
+            </div>
+        </div>
+        <div id="scanner-section" class="hidden">
+            <h2>2. Barkod Okutun</h2>
             <div id="scanner-container">
-                <video id="video" playsinline></video> <!-- playsinline for better mobile experience -->
+                <video id="video"></video>
             </div>
             <div id="product-info">
                 <p>Okutulan Ürün: <strong id="product-name">-</strong></p>
                 <p>Ölçü Birimi: <strong id="product-unit">-</strong></p>
                 <p class="hidden">Daha Önce Sayılan Miktar: <strong id="previous-count">0</strong></p>
             </div>
+            <button id="export-csv">3. Sayımı Bitir ve CSV İndir</button>
         </div>
-
         <div class="results">
             <h2>Sayılan Ürünler</h2>
-            <button id="export-csv">2. Sayımı Bitir ve CSV İndir</button>
             <table id="results-table">
                 <thead>
                     <tr>
@@ -186,15 +74,11 @@
             </table>
         </div>
         <div class="footer">
-            v3.0.0
+            v1.0.0
         </div>
     </div>
-
-    <!-- Gerekli Kütüphaneler -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js"></script>
-
-    <!-- Uygulama Mantığı -->
     <script src="sayim.js"></script>
 </body>
 </html>
