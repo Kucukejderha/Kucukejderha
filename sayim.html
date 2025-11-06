@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barkod ile Sayım Uygulaması - v1.0.0</title>
+    <title>Barkod ile Sayım Uygulaması - v3.0.0</title>
     <style>
         :root {
             --primary-color: #007bff;
@@ -21,14 +21,11 @@
         h2 { font-size: 1.2em; border-bottom: 1px solid #ccc; }
         #scanner-container { position: relative; width: 100%; margin: 20px auto; border-radius: 8px; overflow: hidden; border: 3px dashed var(--secondary-color); }
         #scanner-container video { width: 100%; height: auto; display: block; }
-        .controls, .results { margin-top: 20px; }
+        .results { margin-top: 20px; }
         .hidden { display: none; }
-        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; margin-bottom: 15px; }
-        .file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
-        .file-input-button { background-color: var(--primary-color); color: white; padding: 12px 20px; border-radius: 5px; border: none; cursor: pointer; text-align: center; font-size: 16px; display: block; }
-        .file-input-wrapper:hover .file-input-button { background-color: #0056b3; }
         button { background-color: var(--success-color); color: white; border: none; cursor: pointer; font-size: 18px; padding: 15px; width: 100%; border-radius: 5px; margin-top: 10px; transition: background-color 0.2s; }
         button:hover { opacity: 0.9; }
+        .results h2 { margin-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; }
         th { background-color: #f2f2f2; font-weight: 600; }
@@ -41,26 +38,20 @@
 <body>
     <div class="container">
         <h1>Barkod ile Sayım</h1>
-        <div class="controls">
-            <div class="file-input-wrapper">
-                <div class="file-input-button">1. Ürün Listenizi (Excel) Yükleyin</div>
-                <input type="file" id="file-input" accept=".xlsx, .xls">
-            </div>
-        </div>
-        <div id="scanner-section" class="hidden">
-            <h2>2. Barkod Okutun</h2>
+        <div id="scanner-section">
+            <h2>1. Barkod Okutun</h2>
             <div id="scanner-container">
-                <video id="video"></video>
+                <video id="video" playsinline></video>
             </div>
             <div id="product-info">
                 <p>Okutulan Ürün: <strong id="product-name">-</strong></p>
                 <p>Ölçü Birimi: <strong id="product-unit">-</strong></p>
                 <p class="hidden">Daha Önce Sayılan Miktar: <strong id="previous-count">0</strong></p>
             </div>
-            <button id="export-csv">3. Sayımı Bitir ve CSV İndir</button>
         </div>
         <div class="results">
             <h2>Sayılan Ürünler</h2>
+            <button id="export-csv">2. Sayımı Bitir ve CSV İndir</button>
             <table id="results-table">
                 <thead>
                     <tr>
@@ -74,10 +65,9 @@
             </table>
         </div>
         <div class="footer">
-            v1.0.0
+            v3.0.0
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js"></script>
     <script src="sayim.js"></script>
 </body>

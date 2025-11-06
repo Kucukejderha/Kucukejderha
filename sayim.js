@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     // HTML Elementleri
-    const fileInput = document.getElementById('file-input');
     const scannerSection = document.getElementById('scanner-section');
     const videoElement = document.getElementById('video');
     const productNameElement = document.getElementById('product-name');
@@ -18,27 +17,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const codeReader = new ZXing.BrowserMultiFormatReader();
     let isScanning = true;
 
-    // 1. Dosya Yükleme Mantığı
-    fileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet);
+    // --- 1. Uygulamayı Başlat ---
+    // Sayfa yüklendiğinde ürün verilerini sunucudan çek
+    initApp();
 
-            processProductData(json);
-            scannerSection.classList.remove('hidden');
-            alert('Ürün listesi başarıyla yüklendi. Kamera başlatılıyor...');
-            startScanner();
-        };
-        reader.readAsArrayBuffer(file);
-    });
+    async function initApp() {
+        try {
+            console.log("Ürün verileri sunucudan çekiliyor...");
+            // urunler.json dosyasını, sayim.html ile aynı dizinden çekmeye çalışır.
+            const response = await fetch('urunler.json');
+            if (!response.ok) {
+                throw new Error(`Veri dosyası yüklenemedi. Sunucu yanıtı: ${response.statusText}`);
+            }
+            const data = await response.json();
 
-    // 2. Excel Verisini İşleme
+            processProductData(data);
+
+            scannerSection.classList.remove('hidden'); // Tarayıcıyı göster
+            console.log('Ürün listesi başarıyla yüklendi. Kamera başlatılıyor...');
+            startScanner(); // Veriler hazır, tarayıcıyı başlat
+
+        } catch (error) {
+            console.error("Uygulama başlatılırken hata oluştu:", error);
+            alert(`HATA: Ürün listesi sunucudan alınamadı.\n\nDetay: ${error.message}\n\nLütfen 'urunler.json' dosyasının doğru konumda ve geçerli olduğundan emin olun.`);
+            // Hata durumunda tarayıcı bölümünü gizli tut
+            scannerSection.style.display = 'none';
+        }
+    }
+
+    // --- 2. Ürün Verisini İşleme ---
     function processProductData(data) {
         productDataByBarcode.clear();
         countedItems.clear();
@@ -46,18 +53,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const sku = row.stok_kodu;
             const name = row.stok_adi;
             const unit = row.olcu_br1;
-            const barcode = String(row.barkod).trim();
-            if (!sku || !name || !unit || !barcode) return;
+            // Barkod alanı artık virgülle ayrılmış bir string
+            const barcodeString = String(row.barkod || '').trim();
+
+            if (!sku || !name || !unit || !barcodeString) return;
 
             const productInfo = { sku, name, unit };
-            const barcodes = barcode.split(',').map(b => b.trim());
+
+            const barcodes = barcodeString.split(',').map(b => b.trim());
             barcodes.forEach(b => {
                 if (b) productDataByBarcode.set(b, productInfo);
             });
         });
+        console.log(`${productDataByBarcode.size} barkod başarıyla işlendi.`);
     }
 
-    // 3. Barkod Okuyucuyu Başlatma
+    // --- 3. Barkod Okuyucuyu Başlatma ---
     function startScanner() {
         codeReader.getVideoInputDevices()
             .then(videoInputDevices => {
@@ -72,10 +83,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 } else alert("Kamera bulunamadı.");
             })
-            .catch(err => console.error("Kamera erişim hatası:", err));
+            .catch(err => {
+                console.error("Kamera erişim hatası:", err);
+                alert("Kamera izni reddedildi veya bir hata oluştu. Sayfayı yenileyip tekrar deneyin.");
+            });
     }
 
-    // 4. Stok Sayım Mantığı
+    // --- 4. Stok Sayım Mantığı ---
     function handleBarcode(barcode) {
         const product = productDataByBarcode.get(barcode);
         if (product) {
@@ -104,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { isScanning = true; }, 1000);
     }
 
-    // 5. Sonuç Tablosunu Güncelleme
+    // --- 5. Sonuç Tablosunu Güncelleme ---
     function updateResultsTable() {
         resultsTableBody.innerHTML = '';
         countedItems.forEach((item, sku) => {
@@ -113,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 6. CSV Dışa Aktarma
+    // --- 6. CSV Dışa Aktarma ---
     exportCsvButton.addEventListener('click', () => {
         if (countedItems.size === 0) {
             alert("Dışa aktarılacak sayım sonucu bulunmuyor.");
@@ -122,14 +136,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let csvContent = "data:text/csv;charset=utf-8,stok_kodu,stok_adi,miktar,olcu_br1\n";
         countedItems.forEach((item, sku) => {
-            const row = [sku, item.name, item.quantity, item.unit].join(",");
+            // CSV'de virgül sorunu olmaması için alanları tırnak içine al
+            const row = [`"${sku}"`, `"${item.name}"`, item.quantity, `"${item.unit}"`].join(",");
             csvContent += row + "\n";
         });
 
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "sayim_sonuclari.csv");
+        link.setAttribute("download", `sayim_sonuclari_${new Date().toISOString().slice(0,10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
