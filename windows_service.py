@@ -11,7 +11,7 @@ import time
 import logging
 import pyodbc
 import json
-import paramiko
+from ftplib import FTP
 
 # --- Configuration ---
 # Get the absolute path to the directory where this script is located.
@@ -54,9 +54,9 @@ def run_data_export():
         db_config = config['DATABASE']
         server, database, username, password = db_config['server'], db_config['database'], db_config['username'], db_config['password']
 
-        # SFTP connection details
-        sftp_config = config['SFTP']
-        sftp_host, sftp_port, sftp_user, sftp_pass, sftp_remote_path = sftp_config['host'], int(sftp_config['port']), sftp_config['username'], sftp_config['password'], sftp_config['remote_path']
+        # FTP connection details
+        ftp_config = config['FTP']
+        ftp_host, ftp_port, ftp_user, ftp_pass, ftp_remote_path = ftp_config['host'], int(ftp_config['port']), ftp_config['username'], ftp_config['password'], ftp_config['remote_path']
 
         local_json_path = os.path.join(SCRIPT_PATH, 'urunler.json')
 
@@ -88,14 +88,21 @@ def run_data_export():
             json.dump(output_data, f, ensure_ascii=False)
         log_info(f"JSON dosyası oluşturuldu: {local_json_path}")
 
-        # --- 3. Upload via SFTP ---
-        log_info(f"SFTP sunucusuna bağlanılıyor: {sftp_host}...")
-        with paramiko.Transport((sftp_host, sftp_port)) as transport:
-            transport.connect(username=sftp_user, password=sftp_pass)
-            with paramiko.SFTPClient.from_transport(transport) as sftp:
-                remote_file_path = f"{sftp_remote_path.rstrip('/')}/urunler.json"
-                sftp.put(local_json_path, remote_file_path)
-                log_info(f"Dosya başarıyla yüklendi: {remote_file_path}")
+        # --- 3. Upload via FTP ---
+        log_info(f"FTP sunucusuna bağlanılıyor: {ftp_host}...")
+        with FTP() as ftp:
+            ftp.connect(ftp_host, ftp_port, timeout=30)
+            ftp.login(ftp_user, ftp_pass)
+            log_info("FTP bağlantısı başarılı.")
+
+            remote_file_path = f"{ftp_remote_path.rstrip('/')}/urunler.json"
+            log_info(f"Dosya sunucuya yükleniyor: {remote_file_path}")
+
+            with open(local_json_path, 'rb') as f:
+                ftp.storbinary(f'STOR {remote_file_path}', f)
+
+            log_info("Dosya başarıyla yüklendi.")
+            ftp.quit()
 
     except Exception as e:
         log_error(f"Veri aktarım döngüsünde bir hata oluştu: {e}")

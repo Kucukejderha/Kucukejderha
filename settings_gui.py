@@ -4,7 +4,7 @@ from tkinter import messagebox, Frame, Label, Entry, Button, LabelFrame, StringV
 import configparser
 import os
 import pyodbc
-import paramiko
+from ftplib import FTP, error_perm
 
 # --- Configuration File Handling ---
 CONFIG_FILE = 'config.ini'
@@ -25,8 +25,8 @@ class SettingsApp:
         db_frame = LabelFrame(root, text="Veritabanı Ayarları (MS SQL)", padx=10, pady=10)
         db_frame.pack(padx=10, pady=10, fill="x")
 
-        sftp_frame = LabelFrame(root, text="Web Sunucusu Ayarları (SFTP/FTP)", padx=10, pady=10)
-        sftp_frame.pack(padx=10, pady=10, fill="x")
+        ftp_frame = LabelFrame(root, text="Web Sunucusu Ayarları (FTP)", padx=10, pady=10)
+        ftp_frame.pack(padx=10, pady=10, fill="x")
 
         action_frame = Frame(root, padx=10, pady=10)
         action_frame.pack(fill="x")
@@ -42,18 +42,18 @@ class SettingsApp:
         self._create_entry(db_frame, "Şifre:", self.db_vars['password'], show="*")
         Button(db_frame, text="Veritabanı Bağlantısını Sına", command=self._test_db_connection).pack(pady=5)
 
-        # --- SFTP Section Widgets ---
-        self.sftp_vars = {
-            'host': StringVar(), 'port': StringVar(value="22"),
+        # --- FTP Section Widgets ---
+        self.ftp_vars = {
+            'host': StringVar(), 'port': StringVar(value="21"),
             'username': StringVar(), 'password': StringVar(),
             'remote_path': StringVar()
         }
-        self._create_entry(sftp_frame, "Sunucu Adresi (Host):", self.sftp_vars['host'])
-        self._create_entry(sftp_frame, "Port:", self.sftp_vars['port'])
-        self._create_entry(sftp_frame, "Kullanıcı Adı:", self.sftp_vars['username'])
-        self._create_entry(sftp_frame, "Şifre:", self.sftp_vars['password'], show="*")
-        self._create_entry(sftp_frame, "Uzak Dosya Yolu:", self.sftp_vars['remote_path'])
-        Button(sftp_frame, text="SFTP Bağlantısını Sına", command=self._test_sftp_connection).pack(pady=5)
+        self._create_entry(ftp_frame, "Sunucu Adresi (Host):", self.ftp_vars['host'])
+        self._create_entry(ftp_frame, "Port:", self.ftp_vars['port'])
+        self._create_entry(ftp_frame, "Kullanıcı Adı:", self.ftp_vars['username'])
+        self._create_entry(ftp_frame, "Şifre:", self.ftp_vars['password'], show="*")
+        self._create_entry(ftp_frame, "Uzak Dosya Yolu:", self.ftp_vars['remote_path'])
+        Button(ftp_frame, text="FTP Bağlantısını Sına", command=self._test_ftp_connection).pack(pady=5)
 
         # --- Action Buttons ---
         Button(action_frame, text="Ayarları Kaydet", command=self._save_config, bg="#28a745", fg="white", font=('Helvetica', 10, 'bold')).pack(side="left", expand=True, fill="x", padx=5)
@@ -84,15 +84,15 @@ class SettingsApp:
         if 'DATABASE' in self.config:
             for key, var in self.db_vars.items():
                 var.set(self.config['DATABASE'].get(key, ''))
-        if 'SFTP' in self.config:
-            for key, var in self.sftp_vars.items():
-                var.set(self.config['SFTP'].get(key, ''))
+        if 'FTP' in self.config:
+            for key, var in self.ftp_vars.items():
+                var.set(self.config['FTP'].get(key, ''))
         self.status_var.set("Mevcut ayarlar yüklendi.")
 
     def _save_config(self):
         """Saves current settings to config.ini."""
         self.config['DATABASE'] = {key: var.get() for key, var in self.db_vars.items()}
-        self.config['SFTP'] = {key: var.get() for key, var in self.sftp_vars.items()}
+        self.config['FTP'] = {key: var.get() for key, var in self.ftp_vars.items()}
 
         config_path = os.path.join(get_script_path(), CONFIG_FILE)
         try:
@@ -125,23 +125,24 @@ class SettingsApp:
             self.status_var.set(f"HATA: Veritabanı bağlantısı başarısız.")
             messagebox.showerror("Bağlantı Hatası", f"Veritabanına bağlanılamadı:\n{e}")
 
-    def _test_sftp_connection(self):
-        """Tests the SFTP connection with the provided credentials."""
-        self.status_var.set("SFTP bağlantısı test ediliyor...")
+    def _test_ftp_connection(self):
+        """Tests the FTP connection with the provided credentials."""
+        self.status_var.set("FTP bağlantısı test ediliyor...")
         try:
-            host = self.sftp_vars['host'].get()
-            port = int(self.sftp_vars['port'].get())
-            user = self.sftp_vars['username'].get()
-            passwd = self.sftp_vars['password'].get()
+            host = self.ftp_vars['host'].get()
+            port = int(self.ftp_vars['port'].get())
+            user = self.ftp_vars['username'].get()
+            passwd = self.ftp_vars['password'].get()
 
-            with paramiko.Transport((host, port)) as transport:
-                transport.connect(username=user, password=passwd)
-                if transport.is_authenticated():
-                    self.status_var.set("SFTP bağlantısı BAŞARILI!")
-                    messagebox.showinfo("Başarılı", "SFTP sunucusuna başarıyla bağlanıldı.")
+            with FTP() as ftp:
+                ftp.connect(host, port, timeout=10)
+                ftp.login(user, passwd)
+                self.status_var.set("FTP bağlantısı BAŞARILI!")
+                messagebox.showinfo("Başarılı", f"FTP sunucusuna başarıyla bağlanıldı.\nSunucu Mesajı: {ftp.getwelcome()}")
+                ftp.quit()
         except Exception as e:
-            self.status_var.set(f"HATA: SFTP bağlantısı başarısız.")
-            messagebox.showerror("Bağlantı Hatası", f"SFTP sunucusuna bağlanılamadı:\n{e}")
+            self.status_var.set(f"HATA: FTP bağlantısı başarısız.")
+            messagebox.showerror("Bağlantı Hatası", f"FTP sunucusuna bağlanılamadı:\n{e}")
 
 
 if __name__ == '__main__':
