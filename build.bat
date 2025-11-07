@@ -94,7 +94,7 @@ echo ==========================================================
 echo DERLEME BASARIYLA TAMAMLANDI!
 echo ==========================================================
 echo.
-echo "Output" klasoru altinda olusturulan "SayimUygulamasi_Kurulum_v3.0.1.exe"
+echo "Output" klasoru altinda olusturulan "SayimUygulamasi_Kurulum_v3.0.2.exe"
 echo dosyasini kullanarak uygulamayi kurabilirsiniz.
 echo.
 goto :end

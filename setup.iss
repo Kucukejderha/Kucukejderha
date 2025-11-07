@@ -3,7 +3,8 @@
 
 [Setup]
 AppName=Sayim Veri Aktarim Servisi
-AppVersion=3.0.1
+AppVersion=3.0.2
+PrivilegesRequired=admin
 ; {cm:MyApp} sabit bir GUID'dir, her uygulama için farklı olmalıdır.
 AppId={{F2A5B87C-6B3E-4B7C-8A5E-7D4E7C4B2A8C}}
 DefaultDirName={autopf64}\SayimVeriAktarim
@@ -12,7 +13,7 @@ UninstallDisplayIcon={app}\settings_gui.exe
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
-OutputBaseFilename=SayimUygulamasi_Kurulum_v3.0.1
+OutputBaseFilename=SayimUygulamasi_Kurulum_v3.0.2
 
 [Languages]
 Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
