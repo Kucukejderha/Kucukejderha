@@ -71,7 +71,7 @@ echo Ayar arayuzu derlendi.
 rem --- Adim 4: Windows Servisini Derleme (windows_service.exe) ---
 echo.
 echo [4/6] Windows servisi (windows_service.exe) derleniyor...
-pyinstaller --name windows_service --onefile --icon=NONE windows_service.py
+pyinstaller --name windows_service --onefile --hidden-import=win32timezone --icon=NONE windows_service.py
 if %errorlevel% neq 0 (
     echo HATA: Windows servisi derlenirken bir hata olustu.
     goto :error
@@ -94,7 +94,7 @@ echo ==========================================================
 echo DERLEME BASARIYLA TAMAMLANDI!
 echo ==========================================================
 echo.
-echo "Output" klasoru altinda olusturulan "SayimUygulamasi_Kurulum_v3.0.2.exe"
+echo "Output" klasoru altinda olusturulan "SayimUygulamasi_Kurulum_v3.0.3.exe"
 echo dosyasini kullanarak uygulamayi kurabilirsiniz.
 echo.
 goto :end
