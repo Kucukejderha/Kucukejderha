@@ -2,6 +2,7 @@
 import servicemanager
 import socket
 import sys
+import win32timezone # This import is crucial for PyInstaller to find the hidden module
 import win32event
 import win32service
 import win32serviceutil
