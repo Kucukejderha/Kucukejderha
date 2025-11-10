@@ -15,15 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let countedItems = new Map();
 
     // Barkod Okuyucu
-    const hints = new Map();
-    const formats = [
-        ZXing.BarcodeFormat.EAN_13,
-        ZXing.BarcodeFormat.EAN_8,
-        ZXing.BarcodeFormat.UPC_A,
-        ZXing.BarcodeFormat.UPC_E
-    ];
-    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
-    const codeReader = new ZXing.BrowserMultiFormatReader(hints);
+    // Bütün barkod formatlarını okuması için format kısıtlaması (hints) kaldırıldı.
+    const codeReader = new ZXing.BrowserMultiFormatReader();
 
     let isScanning = true;
     let feedbackTimeout;
@@ -127,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 7. CSV Dışa Aktarma ---
     exportCsvButton.addEventListener('click', () => {
         if (countedItems.size === 0) {
-            messagebox.showwarning("Uyarı", "Dışa aktarılacak sayım sonucu bulunmuyor.");
+            alert("Dışa aktarılacak sayım sonucu bulunmuyor.");
             return;
         }
         let csvContent = "data:text/csv;charset=utf-8,stok_kodu,stok_adi,miktar,olcu_br1\n";
