@@ -1,96 +1,57 @@
-# Barkod ile Sayım Uygulaması - Veri Aktarım Servisi
+# Barkod ile Sayım Uygulaması - Veri Aktarım Betiği
 
-Bu paket, "Barkod ile Sayım" web uygulamasının ihtiyaç duyduğu ürün verilerini MS SQL veritabanından otomatik olarak çeken ve web sunucusuna aktaran Windows hizmetini içerir.
+Bu döküman, "Barkod ile Sayım" web uygulamasının ihtiyaç duyduğu ürün verilerini MS SQL veritabanından otomatik olarak çeken ve web sunucusuna aktaran basit Python betiğinin kurulumunu ve kullanımını açıklar.
 
-Bu proje, son kullanıcıların kolayca kurup yönetebilmesi için bir kurulum sihirbazı (`setup.exe`) ve bir ayar arayüzü ile birlikte gelir.
-
----
-
-## Son Kullanıcılar İçin Kurulum ve Kullanım
-
-Bu bölüm, uygulamayı veritabanı sunucusuna kuracak ve ayarlarını yapacak kişiler içindir.
-
-### Adım 1: Kurulum
-
-1.  Size teslim edilen `SayimUygulamasi_Kurulum_vX.X.X.exe` dosyasını veritabanı sunucunuza kopyalayın.
-2.  Kurulum dosyasına çift tıklayın ve kurulum sihirbazındaki adımları takip edin ("İleri" -> "Kur" -> "Son").
-3.  Kurulum tamamlandığında, "Sayım Uygulaması Ayarları" programı otomatik olarak başlayacaktır.
-
-### Adım 2: Ayarları Yapılandırma
-
-![Ayar Arayüzü](https://i.imgur.com/your-image-url.png) <!-- Bu URL daha sonra gerçek bir ekran görüntüsü ile değiştirilebilir -->
-
-Açılan "Sayım Uygulaması Ayarları" penceresinde:
-
-1.  **Veritabanı Ayarları (MS SQL):**
-    *   **Sunucu Adresi:** MS SQL sunucunuzun IP adresini veya ağ adını girin.
-    *   **Veritabanı Adı:** Ürün tablolarının bulunduğu veritabanının adını girin.
-    *   **Kullanıcı Adı ve Şifre:** Veritabanına bağlanma yetkisi olan bir kullanıcının bilgilerini girin.
-    *   **"Veritabanı Bağlantısını Sına"** butonuna tıklayarak bilgilerin doğru olduğundan emin olun. Başarılı bir "Bağlantı Başarılı" mesajı almalısınız.
-
-2.  **Web Sunucusu Ayarları (SFTP/FTP):**
-    *   **Sunucu Adresi (Host):** Web sitenizin barındığı sunucunun FTP/SFTP adresini girin (örn: `rotaniz.com`).
-    *   **Port:** Genellikle `22`'dir, farklıysa düzeltin.
-    *   **Kullanıcı Adı ve Şifre:** Web sunucusuna dosya yükleme yetkisi olan FTP/SFTP kullanıcınızın bilgilerini girin.
-    *   **Uzak Dosya Yolu:** `urunler.json` dosyasının web sunucusunda tam olarak nereye yükleneceğini belirtin (örn: `/public_html/sayim`).
-    *   **"SFTP Bağlantısını Sına"** butonuna tıklayarak bu bilgilerin de doğruluğunu kontrol edin.
-
-3.  **Ayarları Kaydet:**
-    *   Tüm testler başarılı olduktan sonra, **"Ayarları Kaydet"** butonuna tıklayın.
-
-### Adım 3: Kontrol
-
-Her şey doğru yapıldıysa, "Sayim Veri Aktarim Servisi" adlı Windows hizmeti artık arka planda çalışmaya başlamıştır. Belirlenen aralıklarla (varsayılan olarak saatte bir) veritabanınızı kontrol edecek ve güncel ürün listesini web sunucunuza yükleyecektir.
-
-*   Servisin durumunu kontrol etmek için Windows'ta "Hizmetler" (Services) uygulamasını açıp listede bulabilirsiniz.
-*   Servisin işlem kayıtlarını (`service.log`) ve ayar dosyasını (`config.ini`) programın kurulduğu dizinde bulabilirsiniz (genellikle `C:\Program Files (x86)\SayimVeriAktarim`).
+Bu yöntem, karmaşık Windows servisi kurulumu yerine, standart **Windows Görev Zamanlayıcı** kullanarak otomasyon sağlar.
 
 ---
 
-## Geliştiriciler İçin Derleme Süreci
+## Kurulum ve Kullanım
 
-Bu bölüm, proje dosyalarından yeniden bir `setup.exe` oluşturmak isteyen geliştiriciler içindir. `build.bat` betiği, platform uyumluluk sorunları nedeniyle kullanımdan kaldırılmıştır. Lütfen aşağıdaki manuel adımları takip edin.
+### Adım 1: Gereksinimleri Yükleme
 
-### Gereksinimler
+Betiğin çalışacağı Windows sunucusunda aşağıdakilerin kurulu olması gerekmektedir:
 
-1.  **Python 3:** [python.org](https://www.python.org/) (Kurulumda **"Add python.exe to PATH"** seçeneğini işaretlediğinizden emin olun).
-2.  **Inno Setup:** [jrsoftware.org](https://jrsoftware.org/isinfo.php) (Standart ayarlarla kurmanız yeterlidir).
+1.  **Python 3:** [python.org](https://www.python.org/) adresinden indirin. Kurulum sırasında **"Add Python to PATH"** seçeneğini mutlaka işaretleyin.
+2.  **Gerekli Python Kütüphaneleri:** `pyodbc`. (FTP kütüphanesi Python'da standart olarak gelir.)
+3.  **MS SQL ODBC Sürücüsü:** Betiğin veritabanına bağlanabilmesi için gereklidir. Genellikle SQL Server ile birlikte gelir, ancak eksikse [Microsoft'un sitesinden](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server) indirilebilir.
 
-### Derleme Adımları
-
-Aşağıdaki komutlar, **proje klasörünün içinde açılmış bir PowerShell penceresinde** sırasıyla çalıştırılmalıdır.
-
-**Adım 0: PowerShell'i Açın**
-Proje klasörünün adres çubuğuna `powershell` yazıp Enter'a basarak bir PowerShell penceresi açın.
-
-**Adım 1: Sanal Ortamı Oluşturun**
-```powershell
-python -m venv venv
+Python kurulduktan sonra, bir Komut İstemi (cmd) veya PowerShell penceresi açıp aşağıdaki komutu çalıştırarak `pyodbc` kütüphanesini yükleyin:
+```sh
+pip install pyodbc
 ```
 
-**Adım 2: Sanal Ortamı Aktifleştirin**
-```powershell
-.\venv\Scripts\Activate.ps1
-```
+### Adım 2: Dosyaları Yerleştirme ve Yapılandırma
 
-**Adım 3: Gerekli Kütüphaneleri Yükleyin**
-```powershell
-pip install pyinstaller pywin32 pyodbc paramiko
-```
+1.  `data_exporter.py` ve `config.ini.template` dosyalarını, sunucunuzda kalıcı bir klasöre koyun (örn: `C:\SayimBetik\`).
+2.  `config.ini.template` dosyasının adını `config.ini` olarak değiştirin.
+3.  `config.ini` dosyasını bir metin düzenleyici (Notepad) ile açın ve **kendi bilgilerinize göre** doldurun:
+    *   `[DATABASE]` bölümüne MS SQL veritabanı bağlantı bilgilerinizi girin.
+    *   `[FTP]` bölümüne web sunucunuzun FTP bilgilerini ve `urunler.json` dosyasının yükleneceği yolu (`remote_path`) girin.
+4.  Dosyayı kaydedin.
 
-**Adım 4: Ayar Programını Derleyin (`settings_gui.exe`)**
-```powershell
-pyinstaller --name settings_gui --onefile --windowed --icon=NONE settings_gui.py
-```
+### Adım 3: Manuel Test
 
-**Adım 5: Servis Programını Derleyin (`windows_service.exe`)**
-```powershell
-pyinstaller --name windows_service --onefile --icon=NONE windows_service.py
-```
+Her şeyin doğru çalıştığından emin olmak için betiği önce bir kez elle çalıştırın:
+1.  Bir Komut İstemi veya PowerShell penceresi açın.
+2.  Betiğin bulunduğu klasöre gidin: `cd C:\SayimBetik\`
+3.  Betiği çalıştırın: `python data_exporter.py`
+4.  Ekranda "Veri aktarimi basariyla tamamlandi." mesajını görmelisiniz. Web sunucunuzdaki ilgili klasörü kontrol ederek `urunler.json` dosyasının yüklendiğini doğrulayın.
 
-**Adım 6: Kurulum Dosyasını Oluşturun (`setup.exe`)**
-```powershell
-& "C:\Program Files (x86)\Inno Setup 6\iscc.exe" setup.iss
-```
+### Adım 4: Otomatik Görev Olarak Zamanlama (Windows Görev Zamanlayıcı)
 
-Bu adımlar tamamlandığında, `Output` klasörünün içinde son kullanıcıya dağıtılabilecek olan `SayimUygulamasi_Kurulum_vX.X.X.exe` dosyası hazır olacaktır.
+Bu betiğin belirli aralıklarla (örneğin her saat başı) otomatik çalışmasını sağlamak için:
+
+1.  Başlat menüsüne **"Görev Zamanlayıcı"** (Task Scheduler) yazıp uygulamayı açın.
+2.  Sağdaki "Eylemler" menüsünden **"Temel Görev Oluştur..."** seçeneğine tıklayın.
+3.  **Ad:** "Sayim Veri Aktarimi", **Açıklama:** "Sayım uygulaması için veritabanından JSON oluşturup sunucuya aktarır." yazıp "İleri" deyin.
+4.  **Tetikleyici:** Görevin ne sıklıkla çalışacağını seçin ("Günlük", "Saatlik" vb.). "İleri" deyin.
+5.  **Zamanlama:** Başlangıç tarihini ve saatini ayarlayın. "İleri" deyin.
+6.  **Eylem:** **"Program başlat"** seçeneğini seçip "İleri" deyin.
+7.  Açılan pencerede:
+    *   **Program/betik:** `python.exe` yazın. (PATH'e doğru eklendiyse bu yeterlidir).
+    *   **Bağımsız değişken ekle (isteğe bağlı):** `data_exporter.py` dosyanızın tam yolunu yazın. Örneğin: `C:\SayimBetik\data_exporter.py`
+    *   **Başlat (isteğe bağlı):** Betiğin bulunduğu klasörün yolunu yazın. Örneğin: `C:\SayimBetik\`
+8.  "Son" butonuna tıklayarak görevi oluşturun.
+
+Artık bu betik, belirlediğiniz aralıklarla otomatik olarak çalışacak ve ürün listenizi güncel tutacaktır. Bu yöntem, Windows servisine göre çok daha basit ve yönetimi kolaydır.

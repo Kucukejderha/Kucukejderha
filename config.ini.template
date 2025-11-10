@@ -16,22 +16,16 @@ password = YourPassword123
 ; Kurulu sürücüleri Windows'ta "ODBC Data Sources" uygulamasından görebilirsiniz.
 driver = {ODBC Driver 17 for SQL Server}
 
-[SFTP]
+[FTP]
 ; urunler.json dosyasının yükleneceği web sunucusunun adresi (örn: rotaniz.com)
 host = ftp.example.com
-; Genellikle 22'dir. Farklı bir port kullanıyorsanız değiştirin.
-port = 22
-; SFTP (veya FTP) kullanıcı adınız
-username = your_sftp_username
-; SFTP (veya FTP) şifreniz
-password = YourSftpPassword456
+; Genellikle 21'dir. Farklı bir port kullanıyorsanız değiştirin.
+port = 21
+; FTP kullanıcı adınız
+username = your_ftp_username
+; FTP şifreniz
+password = YourFtpPassword456
 ; Dosyanın web sunucusunda yükleneceği yol.
 ; Genellikle public_html veya www klasörünün içindeki bir yoldur.
 ; Örneğin, sayim uygulamanızın olduğu klasör: /public_html/sayim
 remote_path = /path/to/your/sayim/folder
-
-[SERVICE]
-; Servisin veri aktarımını hangi aralıkla yapacağını belirler (saniye cinsinden).
-; 3600 = 1 saat
-; 1800 = 30 dakika
-interval_seconds = 3600
