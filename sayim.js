@@ -6,41 +6,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const productUnitElement = document.getElementById('product-unit');
     const previousCountElement = document.getElementById('previous-count');
     const previousCountContainer = previousCountElement.parentElement;
+    const userFeedbackElement = document.getElementById('user-feedback');
     const resultsTableBody = document.querySelector("#results-table tbody");
     const exportCsvButton = document.getElementById('export-csv');
 
     // Veri Depolama
     let productDataByBarcode = new Map();
-    let countedItems = new Map(); // Key: stok_kodu, Value: { name, unit, quantity }
+    let countedItems = new Map();
 
     // Barkod Okuyucu
-    const codeReader = new ZXing.BrowserMultiFormatReader();
+    const hints = new Map();
+    const formats = [
+        ZXing.BarcodeFormat.EAN_13,
+        ZXing.BarcodeFormat.EAN_8,
+        ZXing.BarcodeFormat.UPC_A,
+        ZXing.BarcodeFormat.UPC_E
+    ];
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+    const codeReader = new ZXing.BrowserMultiFormatReader(hints);
+
     let isScanning = true;
+    let feedbackTimeout;
 
     // --- 1. Uygulamayı Başlat ---
-    // Sayfa yüklendiğinde ürün verilerini sunucudan çek
     initApp();
 
     async function initApp() {
         try {
-            console.log("Ürün verileri sunucudan çekiliyor...");
-            // urunler.json dosyasını, sayim.html ile aynı dizinden çekmeye çalışır.
-            const response = await fetch('urunler.json');
-            if (!response.ok) {
-                throw new Error(`Veri dosyası yüklenemedi. Sunucu yanıtı: ${response.statusText}`);
-            }
+            const response = await fetch('urunler.json?v=' + Date.now()); // Cache-busting
+            if (!response.ok) throw new Error(`Sunucu yanıtı: ${response.statusText}`);
             const data = await response.json();
-
             processProductData(data);
-
-            scannerSection.classList.remove('hidden'); // Tarayıcıyı göster
-            console.log('Ürün listesi başarıyla yüklendi. Kamera başlatılıyor...');
-            startScanner(); // Veriler hazır, tarayıcıyı başlat
-
+            showFeedback('Ürün listesi yüklendi. Kamera başlatılıyor...', 'success');
+            startScanner();
         } catch (error) {
-            console.error("Uygulama başlatılırken hata oluştu:", error);
-            alert(`HATA: Ürün listesi sunucudan alınamadı.\n\nDetay: ${error.message}\n\nLütfen 'urunler.json' dosyasının doğru konumda ve geçerli olduğundan emin olun.`);
-            // Hata durumunda tarayıcı bölümünü gizli tut
+            showFeedback(`HATA: Ürün listesi alınamadı. ${error.message}`, 'error');
             scannerSection.style.display = 'none';
         }
     }
@@ -50,25 +50,26 @@ document.addEventListener('DOMContentLoaded', () => {
         productDataByBarcode.clear();
         countedItems.clear();
         data.forEach(row => {
-            const sku = row.stok_kodu;
-            const name = row.stok_adi;
-            const unit = row.olcu_br1;
-            // Barkod alanı artık virgülle ayrılmış bir string
-            const barcodeString = String(row.barkod || '').trim();
-
-            if (!sku || !name || !unit || !barcodeString) return;
-
-            const productInfo = { sku, name, unit };
-
-            const barcodes = barcodeString.split(',').map(b => b.trim());
-            barcodes.forEach(b => {
-                if (b) productDataByBarcode.set(b, productInfo);
-            });
+            if (!row.stok_kodu || !row.stok_adi || !row.olcu_br1 || !row.barkod) return;
+            const productInfo = { sku: row.stok_kodu, name: row.stok_adi, unit: row.olcu_br1 };
+            const barcodes = String(row.barkod).split(',').map(b => b.trim());
+            barcodes.forEach(b => { if (b) productDataByBarcode.set(b, productInfo); });
         });
-        console.log(`${productDataByBarcode.size} barkod başarıyla işlendi.`);
     }
 
-    // --- 3. Barkod Okuyucuyu Başlatma ---
+    // --- 3. Kullanıcı Geri Bildirimi ---
+    function showFeedback(message, type = 'error') {
+        clearTimeout(feedbackTimeout);
+        userFeedbackElement.textContent = message;
+        userFeedbackElement.style.color = type === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
+        userFeedbackElement.style.display = 'block';
+
+        feedbackTimeout = setTimeout(() => {
+            userFeedbackElement.style.display = 'none';
+        }, 3000); // Mesaj 3 saniye sonra kaybolur
+    }
+
+    // --- 4. Barkod Okuyucuyu Başlatma ---
     function startScanner() {
         codeReader.getVideoInputDevices()
             .then(videoInputDevices => {
@@ -81,44 +82,40 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         if (err && !(err instanceof ZXing.NotFoundException)) console.error("Tarama Hatası:", err);
                     });
-                } else alert("Kamera bulunamadı.");
+                } else showFeedback("Kamera bulunamadı.", 'error');
             })
-            .catch(err => {
-                console.error("Kamera erişim hatası:", err);
-                alert("Kamera izni reddedildi veya bir hata oluştu. Sayfayı yenileyip tekrar deneyin.");
-            });
+            .catch(err => showFeedback("Kamera izni reddedildi veya hata oluştu.", 'error'));
     }
 
-    // --- 4. Stok Sayım Mantığı ---
+    // --- 5. Stok Sayım Mantığı ---
     function handleBarcode(barcode) {
         const product = productDataByBarcode.get(barcode);
         if (product) {
             productNameElement.textContent = product.name;
             productUnitElement.textContent = product.unit;
-
             let currentQuantity = countedItems.has(product.sku) ? countedItems.get(product.sku).quantity : 0;
             if (currentQuantity > 0) {
                 previousCountElement.textContent = currentQuantity;
                 previousCountContainer.classList.remove('hidden');
             }
-
             const amountStr = prompt(`Ürün: ${product.name}\nMevcut Miktar: ${currentQuantity} ${product.unit}\n\nEklenecek Miktarı Girin:`);
-
             if (amountStr) {
                 const amount = parseFloat(amountStr.replace(',', '.'));
                 if (!isNaN(amount) && amount > 0) {
                     countedItems.set(product.sku, { name: product.name, unit: product.unit, quantity: currentQuantity + amount });
                     updateResultsTable();
-                } else alert("Lütfen geçerli bir sayı girin.");
+                } else {
+                    showFeedback("Geçersiz miktar girdiniz!", 'error');
+                }
             }
             previousCountContainer.classList.add('hidden');
         } else {
-            alert('Bu barkod ürün listenizde bulunamadı.');
+            showFeedback(`Barkod bulunamadı: ${barcode}`, 'error');
         }
-        setTimeout(() => { isScanning = true; }, 1000);
+        setTimeout(() => { isScanning = true; }, 1500); // Kullanıcının geri bildirimi görmesi için bekleme süresi
     }
 
-    // --- 5. Sonuç Tablosunu Güncelleme ---
+    // --- 6. Sonuç Tablosunu Güncelleme ---
     function updateResultsTable() {
         resultsTableBody.innerHTML = '';
         countedItems.forEach((item, sku) => {
@@ -127,20 +124,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 6. CSV Dışa Aktarma ---
+    // --- 7. CSV Dışa Aktarma ---
     exportCsvButton.addEventListener('click', () => {
         if (countedItems.size === 0) {
-            alert("Dışa aktarılacak sayım sonucu bulunmuyor.");
+            messagebox.showwarning("Uyarı", "Dışa aktarılacak sayım sonucu bulunmuyor.");
             return;
         }
-
         let csvContent = "data:text/csv;charset=utf-8,stok_kodu,stok_adi,miktar,olcu_br1\n";
         countedItems.forEach((item, sku) => {
-            // CSV'de virgül sorunu olmaması için alanları tırnak içine al
             const row = [`"${sku}"`, `"${item.name}"`, item.quantity, `"${item.unit}"`].join(",");
             csvContent += row + "\n";
         });
-
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);

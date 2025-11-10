@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barkod ile Sayım Uygulaması - v5.0.0</title>
+    <title>Barkod ile Sayım Uygulaması - v5.0.1</title>
     <style>
         :root {
             --primary-color: #007bff;
@@ -30,8 +30,9 @@
         th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; }
         th { background-color: #f2f2f2; font-weight: 600; }
         tbody tr:nth-child(odd) { background-color: var(--light-color); }
-        #product-info { text-align: center; margin: 20px 0; padding: 15px; font-size: 1.1em; color: var(--dark-color); background-color: var(--light-color); border-radius: 5px; }
+        #product-info { text-align: center; margin: 20px 0; padding: 15px; font-size: 1.1em; color: var(--dark-color); background-color: var(--light-color); border-radius: 5px; position: relative; }
         #previous-count { color: var(--danger-color); font-weight: bold; font-size: 1.2em; }
+        #user-feedback { font-weight: bold; color: var(--danger-color); margin-top: 10px; }
         .footer { text-align: right; margin-top: 20px; font-size: 0.8em; color: var(--secondary-color); }
     </style>
 </head>
@@ -44,6 +45,7 @@
                 <video id="video" playsinline></video>
             </div>
             <div id="product-info">
+                <div id="user-feedback"></div>
                 <p>Okutulan Ürün: <strong id="product-name">-</strong></p>
                 <p>Ölçü Birimi: <strong id="product-unit">-</strong></p>
                 <p class="hidden">Daha Önce Sayılan Miktar: <strong id="previous-count">0</strong></p>
@@ -65,7 +67,7 @@
             </table>
         </div>
         <div class="footer">
-            v5.0.0
+            v5.0.1
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js"></script>
