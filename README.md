@@ -49,25 +49,48 @@ Her şey doğru yapıldıysa, "Sayim Veri Aktarim Servisi" adlı Windows hizmeti
 
 ## Geliştiriciler İçin Derleme Süreci
 
-Bu bölüm, proje dosyalarından yeniden bir `setup.exe` oluşturmak isteyen geliştiriciler içindir.
+Bu bölüm, proje dosyalarından yeniden bir `setup.exe` oluşturmak isteyen geliştiriciler içindir. `build.bat` betiği, platform uyumluluk sorunları nedeniyle kullanımdan kaldırılmıştır. Lütfen aşağıdaki manuel adımları takip edin.
 
 ### Gereksinimler
 
-1.  **Python 3:** [python.org](https://www.python.org/) (Kurulumda "Add Python to PATH" seçeneğini işaretleyin).
-2.  **Inno Setup:** [jrsoftware.org](https://jrsoftware.org/isinfo.php) (Kurulumda PATH'e ekleme seçeneğini işaretleyin).
+1.  **Python 3:** [python.org](https://www.python.org/) (Kurulumda **"Add python.exe to PATH"** seçeneğini işaretlediğinizden emin olun).
+2.  **Inno Setup:** [jrsoftware.org](https://jrsoftware.org/isinfo.php) (Standart ayarlarla kurmanız yeterlidir).
 
 ### Derleme Adımları
 
-Projenin ana dizininde bulunan `build.bat` komut dosyasını çalıştırmanız yeterlidir.
+Aşağıdaki komutlar, **proje klasörünün içinde açılmış bir PowerShell penceresinde** sırasıyla çalıştırılmalıdır.
 
-```bash
-build.bat
+**Adım 0: PowerShell'i Açın**
+Proje klasörünün adres çubuğuna `powershell` yazıp Enter'a basarak bir PowerShell penceresi açın.
+
+**Adım 1: Sanal Ortamı Oluşturun**
+```powershell
+python -m venv venv
 ```
 
-Bu betik aşağıdaki işlemleri otomatik olarak yapar:
-1.  Bir Python sanal ortamı oluşturur.
-2.  Gerekli tüm Python kütüphanelerini (`pyinstaller`, `pywin32`, `pyodbc`, `paramiko`) kurar.
-3.  `settings_gui.py` ve `windows_service.py` betiklerini, `dist` klasörü altında bağımsız `.exe` dosyalarına derler.
-4.  `setup.iss` Inno Setup betiğini kullanarak bu `.exe` dosyalarını ve `config.ini` şablonunu tek bir kurulum dosyasına (`Output` klasörü altında `SayimUygulamasi_Kurulum_vX.X.X.exe`) paketler.
+**Adım 2: Sanal Ortamı Aktifleştirin**
+```powershell
+.\venv\Scripts\Activate.ps1
+```
 
-Derleme tamamlandığında, son kullanıcıya dağıtılabilecek olan `setup.exe` dosyası hazır olacaktır.
+**Adım 3: Gerekli Kütüphaneleri Yükleyin**
+```powershell
+pip install pyinstaller pywin32 pyodbc paramiko
+```
+
+**Adım 4: Ayar Programını Derleyin (`settings_gui.exe`)**
+```powershell
+pyinstaller --name settings_gui --onefile --windowed --icon=NONE settings_gui.py
+```
+
+**Adım 5: Servis Programını Derleyin (`windows_service.exe`)**
+```powershell
+pyinstaller --name windows_service --onefile --icon=NONE windows_service.py
+```
+
+**Adım 6: Kurulum Dosyasını Oluşturun (`setup.exe`)**
+```powershell
+& "C:\Program Files (x86)\Inno Setup 6\iscc.exe" setup.iss
+```
+
+Bu adımlar tamamlandığında, `Output` klasörünün içinde son kullanıcıya dağıtılabilecek olan `SayimUygulamasi_Kurulum_vX.X.X.exe` dosyası hazır olacaktır.
