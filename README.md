@@ -1,57 +1,47 @@
-# Barkod ile Sayım Uygulaması - Veri Aktarım Betiği
+# Barkod ile Sayım Uygulaması - Veri Aktarım Yöneticisi
 
-Bu döküman, "Barkod ile Sayım" web uygulamasının ihtiyaç duyduğu ürün verilerini MS SQL veritabanından otomatik olarak çeken ve web sunucusuna aktaran basit Python betiğinin kurulumunu ve kullanımını açıklar.
-
-Bu yöntem, karmaşık Windows servisi kurulumu yerine, standart **Windows Görev Zamanlayıcı** kullanarak otomasyon sağlar.
+Bu proje iki ana bölümden oluşur:
+1.  **Veri Aktarım Yöneticisi (`manager_app.py`):** Ürün verilerini MS SQL veritabanından çeken, `urunler.json` dosyasını oluşturan ve bu dosyayı FTP ile web sunucusuna yükleyen, kullanıcı arayüzüne sahip bir masaüstü uygulamasıdır.
+2.  **Web Uygulaması (`sayim.html`, `sayim.js`):** `urunler.json` dosyasını okuyarak mobil cihazlarda barkod ile sayım yapılmasını sağlayan web arayüzüdür.
 
 ---
 
-## Kurulum ve Kullanım
+## Veri Aktarım Yöneticisi'nin Kurulumu ve Kullanımı
+
+Bu bölüm, sunucu tarafında çalışacak olan yönetici programının nasıl kurulacağını ve kullanılacağını açıklar.
 
 ### Adım 1: Gereksinimleri Yükleme
 
-Betiğin çalışacağı Windows sunucusunda aşağıdakilerin kurulu olması gerekmektedir:
+Yönetici programını çalıştıracağınız Windows bilgisayarında aşağıdakilerin kurulu olması gerekmektedir:
 
 1.  **Python 3:** [python.org](https://www.python.org/) adresinden indirin. Kurulum sırasında **"Add Python to PATH"** seçeneğini mutlaka işaretleyin.
-2.  **Gerekli Python Kütüphaneleri:** `pyodbc`. (FTP kütüphanesi Python'da standart olarak gelir.)
-3.  **MS SQL ODBC Sürücüsü:** Betiğin veritabanına bağlanabilmesi için gereklidir. Genellikle SQL Server ile birlikte gelir, ancak eksikse [Microsoft'un sitesinden](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server) indirilebilir.
+2.  **Gerekli Python Kütüphaneleri:** `pyodbc` ve `pyinstaller`.
+3.  **MS SQL ODBC Sürücüsü:** Gerekliyse [Microsoft'un sitesinden](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server) indirilebilir.
 
-Python kurulduktan sonra, bir Komut İstemi (cmd) veya PowerShell penceresi açıp aşağıdaki komutu çalıştırarak `pyodbc` kütüphanesini yükleyin:
+Python kurulduktan sonra, bir Komut İstemi (cmd) veya PowerShell penceresi açıp aşağıdaki komutları çalıştırarak gerekli kütüphaneleri yükleyin:
 ```sh
 pip install pyodbc
+pip install pyinstaller
 ```
 
-### Adım 2: Dosyaları Yerleştirme ve Yapılandırma
+### Adım 2: Programı Çalıştırılabilir `.exe` Dosyasına Dönüştürme
 
-1.  `data_exporter.py` ve `config.ini.template` dosyalarını, sunucunuzda kalıcı bir klasöre koyun (örn: `C:\SayimBetik\`).
-2.  `config.ini.template` dosyasının adını `config.ini` olarak değiştirin.
-3.  `config.ini` dosyasını bir metin düzenleyici (Notepad) ile açın ve **kendi bilgilerinize göre** doldurun:
-    *   `[DATABASE]` bölümüne MS SQL veritabanı bağlantı bilgilerinizi girin.
-    *   `[FTP]` bölümüne web sunucunuzun FTP bilgilerini ve `urunler.json` dosyasının yükleneceği yolu (`remote_path`) girin.
-4.  Dosyayı kaydedin.
+1.  Proje dosyalarını (`manager_app.py` vb.) sunucunuzda kalıcı bir klasöre koyun (örn: `C:\SayimYonetici\`).
+2.  Bir Komut İstemi veya PowerShell penceresi açın ve bu klasöre gidin: `cd C:\SayimYonetici\`
+3.  Aşağıdaki `pyinstaller` komutunu çalıştırarak programı tek bir `.exe` dosyasına dönüştürün:
+    ```sh
+    pyinstaller --name SayimYonetici --onefile --windowed manager_app.py
+    ```
+4.  İşlem tamamlandığında, `C:\SayimYonetici\dist\` klasörü içinde **`SayimYonetici.exe`** adında tek bir dosya oluşacaktır. Artık bu dosyayı kullanacaksınız. Diğer `.py` dosyalarına ihtiyacınız kalmamıştır.
 
-### Adım 3: Manuel Test
+### Adım 3: Programı Kullanma
 
-Her şeyin doğru çalıştığından emin olmak için betiği önce bir kez elle çalıştırın:
-1.  Bir Komut İstemi veya PowerShell penceresi açın.
-2.  Betiğin bulunduğu klasöre gidin: `cd C:\SayimBetik\`
-3.  Betiği çalıştırın: `python data_exporter.py`
-4.  Ekranda "Veri aktarimi basariyla tamamlandi." mesajını görmelisiniz. Web sunucunuzdaki ilgili klasörü kontrol ederek `urunler.json` dosyasının yüklendiğini doğrulayın.
+1.  `SayimYonetici.exe` programını çalıştırın.
+2.  Açılan arayüzde, **"Veritabanı Ayarları"** ve **"Web Sunucusu Ayarları (FTP)"** bölümlerini kendi sunucu bilgilerinize göre doldurun.
+3.  **"Ayarları Kaydet"** butonuna tıklayın. Ayarlarınız, programın yanındaki `config.ini` dosyasına kaydedilecektir.
+4.  Veri aktarımını yapmak istediğinizde:
+    *   Önce **"1. Veriyi Çek ve JSON Oluştur"** butonuna tıklayın. İşlem bittiğinde `urunler.json` dosyası programın yanında oluşacaktır.
+    *   Ardından **"2. JSON'u FTP'ye Yükle"** butonuna tıklayarak bu dosyayı web sunucunuza gönderin.
+5.  Tüm işlemlerin sonuçlarını ve olası hataları, arayüzün altındaki **"İşlem Kayıtları (Log)"** bölümünden veya programın yanındaki `log.txt` dosyasından takip edebilirsiniz.
 
-### Adım 4: Otomatik Görev Olarak Zamanlama (Windows Görev Zamanlayıcı)
-
-Bu betiğin belirli aralıklarla (örneğin her saat başı) otomatik çalışmasını sağlamak için:
-
-1.  Başlat menüsüne **"Görev Zamanlayıcı"** (Task Scheduler) yazıp uygulamayı açın.
-2.  Sağdaki "Eylemler" menüsünden **"Temel Görev Oluştur..."** seçeneğine tıklayın.
-3.  **Ad:** "Sayim Veri Aktarimi", **Açıklama:** "Sayım uygulaması için veritabanından JSON oluşturup sunucuya aktarır." yazıp "İleri" deyin.
-4.  **Tetikleyici:** Görevin ne sıklıkla çalışacağını seçin ("Günlük", "Saatlik" vb.). "İleri" deyin.
-5.  **Zamanlama:** Başlangıç tarihini ve saatini ayarlayın. "İleri" deyin.
-6.  **Eylem:** **"Program başlat"** seçeneğini seçip "İleri" deyin.
-7.  Açılan pencerede:
-    *   **Program/betik:** `python.exe` yazın. (PATH'e doğru eklendiyse bu yeterlidir).
-    *   **Bağımsız değişken ekle (isteğe bağlı):** `data_exporter.py` dosyanızın tam yolunu yazın. Örneğin: `C:\SayimBetik\data_exporter.py`
-    *   **Başlat (isteğe bağlı):** Betiğin bulunduğu klasörün yolunu yazın. Örneğin: `C:\SayimBetik\`
-8.  "Son" butonuna tıklayarak görevi oluşturun.
-
-Artık bu betik, belirlediğiniz aralıklarla otomatik olarak çalışacak ve ürün listenizi güncel tutacaktır. Bu yöntem, Windows servisine göre çok daha basit ve yönetimi kolaydır.
+Bu program, veri güncellemelerini sizin kontrolünüzde, istediğiniz zaman yapmanızı sağlar. Otomasyona ihtiyaç duyulmamıştır.
