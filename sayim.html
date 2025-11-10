@@ -45,6 +45,59 @@
         #previous-count { color: var(--danger-color); font-weight: bold; font-size: 1.2em; }
         #user-feedback { font-weight: bold; color: var(--danger-color); margin-top: 10px; }
         .footer { text-align: right; margin-top: 20px; font-size: 0.8em; color: var(--secondary-color); }
+
+        /* Modal Stilleri */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+        #quantity-input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            border: 2px solid var(--primary-color);
+            border-radius: 5px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .modal-buttons button {
+            width: 100%;
+            padding: 10px;
+        }
+        #modal-confirm-btn {
+            background-color: var(--success-color);
+        }
+        #modal-cancel-btn {
+            background-color: var(--danger-color);
+        }
     </style>
 </head>
 <body>
@@ -82,6 +135,21 @@
             v5.0.1
         </div>
     </div>
+
+    <!-- Miktar Giriş Modalı -->
+    <div id="quantity-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="modal-product-name">Ürün Adı</h3>
+            <p>Mevcut Miktar: <span id="modal-current-quantity">0</span> <span id="modal-product-unit">Birim</span></p>
+            <label for="quantity-input">Eklenecek Miktar:</label>
+            <input type="number" id="quantity-input" placeholder="Miktar girin...">
+            <div class="modal-buttons">
+                <button id="modal-cancel-btn">İptal</button>
+                <button id="modal-confirm-btn">Onayla</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js"></script>
     <script src="sayim.js"></script>
 </body>

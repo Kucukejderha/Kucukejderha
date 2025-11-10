@@ -10,6 +10,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsTableBody = document.querySelector("#results-table tbody");
     const exportCsvButton = document.getElementById('export-csv');
 
+    // Modal Elementleri
+    const modal = document.getElementById('quantity-modal');
+    const modalProductName = document.getElementById('modal-product-name');
+    const modalCurrentQuantity = document.getElementById('modal-current-quantity');
+    const modalProductUnit = document.getElementById('modal-product-unit');
+    const quantityInput = document.getElementById('quantity-input');
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+    const cancelBtn = document.getElementById('modal-cancel-btn');
+
+    // Geçici Veri Depolama
+    let currentProduct = null;
+
     // Veri Depolama
     let productDataByBarcode = new Map();
     let countedItems = new Map();
@@ -131,33 +143,70 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    // --- 5. Stok Sayım Mantığı ---
+    // --- 5. Stok Sayım Mantığı ve Modal Yönetimi ---
+    function openQuantityModal(product) {
+        currentProduct = product;
+        modalProductName.textContent = product.name;
+        modalProductUnit.textContent = product.unit;
+
+        const currentQuantity = countedItems.has(product.sku) ? countedItems.get(product.sku).quantity : 0;
+        modalCurrentQuantity.textContent = currentQuantity;
+
+        quantityInput.value = ''; // Giriş alanını temizle
+        modal.classList.remove('hidden');
+        quantityInput.focus(); // Sayı giriş alanına otomatik odaklan
+    }
+
+    function closeQuantityModal() {
+        modal.classList.add('hidden');
+        currentProduct = null;
+        // Taramanın yeniden başlaması için bir bekleme süresi
+        setTimeout(() => { isScanning = true; }, 500);
+    }
+
+    function confirmQuantity() {
+        if (!currentProduct) return;
+
+        const amountStr = quantityInput.value;
+        const amount = parseFloat(amountStr.replace(',', '.'));
+
+        if (!isNaN(amount) && amount > 0) {
+            const currentQuantity = countedItems.has(currentProduct.sku) ? countedItems.get(currentProduct.sku).quantity : 0;
+            countedItems.set(currentProduct.sku, {
+                name: currentProduct.name,
+                unit: currentProduct.unit,
+                quantity: currentQuantity + amount
+            });
+            updateResultsTable();
+            closeQuantityModal();
+        } else {
+            alert("Lütfen geçerli bir miktar girin.");
+            quantityInput.focus();
+            quantityInput.select();
+        }
+    }
+
+    cancelBtn.addEventListener('click', closeQuantityModal);
+    confirmBtn.addEventListener('click', confirmQuantity);
+    quantityInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            confirmQuantity();
+        }
+    });
+
     function handleBarcode(barcode) {
         const product = productDataByBarcode.get(barcode);
         if (product) {
             productNameElement.textContent = product.name;
             productUnitElement.textContent = product.unit;
-            let currentQuantity = countedItems.has(product.sku) ? countedItems.get(product.sku).quantity : 0;
-            if (currentQuantity > 0) {
-                previousCountElement.textContent = currentQuantity;
-                previousCountContainer.classList.remove('hidden');
-            }
-            const amountStr = prompt(`Ürün: ${product.name}\nMevcut Miktar: ${currentQuantity} ${product.unit}\n\nEklenecek Miktarı Girin:`);
-            if (amountStr) {
-                const amount = parseFloat(amountStr.replace(',', '.'));
-                if (!isNaN(amount) && amount > 0) {
-                    countedItems.set(product.sku, { name: product.name, unit: product.unit, quantity: currentQuantity + amount });
-                    updateResultsTable();
-                } else {
-                    showFeedback("Geçersiz miktar girdiniz!", 'error');
-                }
-            }
-            previousCountContainer.classList.add('hidden');
+            openQuantityModal(product);
         } else {
             showFeedback(`Barkod bulunamadı: ${barcode}`, 'error');
+            setTimeout(() => { isScanning = true; }, 1500);
         }
-        setTimeout(() => { isScanning = true; }, 1500); // Kullanıcının geri bildirimi görmesi için bekleme süresi
     }
+    // Test betiğinin erişebilmesi için fonksiyonu global kapsama taşı
+    window.handleBarcode = handleBarcode;
 
     // --- 6. Sonuç Tablosunu Güncelleme ---
     function updateResultsTable() {
