@@ -3,7 +3,7 @@
 
 [Setup]
 AppName=Sayim Veri Aktarim Servisi
-AppVersion=3.0.5
+AppVersion=3.0.6
 PrivilegesRequired=admin
 ; {cm:MyApp} sabit bir GUID'dir, her uygulama için farklı olmalıdır.
 AppId={{F2A5B87C-6B3E-4B7C-8A5E-7D4E7C4B2A8C}}
@@ -13,7 +13,7 @@ UninstallDisplayIcon={app}\settings_gui.exe
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
-OutputBaseFilename=SayimUygulamasi_Kurulum_v3.0.5
+OutputBaseFilename=SayimUygulamasi_Kurulum_v3.0.6
 
 [Languages]
 Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
@@ -41,6 +41,7 @@ Type: files; Name: "{app}\service.log"
 [Code]
 var
   ServiceInstalled: Boolean;
+  ResultCode: Integer;
 
 // Kurulum başladığında
 procedure CurStepChanged(CurStep: TSetupStep);
