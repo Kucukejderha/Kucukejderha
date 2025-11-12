@@ -76,81 +76,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 4. Barkod Okuyucuyu Başlatma (Akıllı Odaklanma ve Arka Kamera Önceliği ile) ---
     function startScanner() {
-        // Modern ve güvenilir yöntem: Doğrudan arka kamerayı talep et
+        // Arka kamerayı (environment) önceliklendir
         const constraints = {
             video: {
                 facingMode: 'environment'
             }
         };
 
+        // Önce arka kamerayı dene
         navigator.mediaDevices.getUserMedia(constraints)
-            .then(stream => {
-                videoElement.srcObject = stream;
-                videoElement.play();
-                startScanLoop();
-            })
+            .then(startStreaming) // Başarılı olursa stream'i başlat
             .catch(err => {
-                console.warn("Modern kamera talebi başarısız oldu, eski yönteme geçiliyor:", err);
-                // Eski yöntem: Cihazları listele ve "back" etiketli olanı bul
-                codeReader.getVideoInputDevices()
-                    .then(videoInputDevices => {
-                        if (videoInputDevices.length === 0) {
-                            throw new Error("Kamera bulunamadı.");
-                        }
-                        const rearCamera = videoInputDevices.find(d => d.label.toLowerCase().includes('back')) || videoInputDevices[0];
-
-                        navigator.mediaDevices.getUserMedia({
-                            video: { deviceId: { exact: rearCamera.deviceId } }
-                        }).then(stream => {
-                    videoElement.srcObject = stream;
-                    videoElement.play();
-                    startScanLoop();
-                });
+                console.warn("Arka kamera ('environment') alınamadı, varsayılan kameraya geçiliyor:", err);
+                // Arka kamera başarısız olursa, herhangi bir kamerayı dene (genellikle ön kamera veya laptop kamerası)
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(startStreaming) // Başarılı olursa stream'i başlat
+                    .catch(finalErr => {
+                        // Hiçbir kamera bulunamazsa veya izin verilmezse hata göster
+                        console.error("Kamera başlatılamadı:", finalErr);
+                        showFeedback(`HATA: Kamera başlatılamadı. Lütfen kamera izni verdiğinizden emin olun.`, 'error');
+                    });
             });
-        });
+    }
 
-        function startScanLoop() {
-            videoElement.onloadedmetadata = () => {
-                const canvas = document.createElement('canvas');
-                const canvasContext = canvas.getContext('2d', { willReadFrequently: true });
+    // Gelen video akışını işleyen ve tarama döngüsünü başlatan yardımcı fonksiyon
+    function startStreaming(stream) {
+        videoElement.srcObject = stream;
+        videoElement.play();
 
-                canvas.width = videoElement.videoWidth;
-                canvas.height = videoElement.videoHeight;
+        videoElement.onloadedmetadata = () => {
+            const canvas = document.createElement('canvas');
+            const canvasContext = canvas.getContext('2d', { willReadFrequently: true });
 
-                const scanFrame = () => {
-                    if (!isScanning || videoElement.paused || videoElement.ended) {
-                        return;
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+
+            const scanFrame = () => {
+                if (!isScanning || videoElement.paused || videoElement.ended) {
+                    return;
+                }
+
+                // Sadece videonun ortasındaki %30'luk dikey alanı tara ("Akıllı Odaklanma")
+                const regionHeight = videoElement.videoHeight * 0.3;
+                const regionY = (videoElement.videoHeight / 2) - (regionHeight / 2);
+
+                // O anki video karesinin ilgili bölgesini canvas'a çiz
+                canvasContext.drawImage(videoElement, 0, regionY, videoElement.videoWidth, regionHeight, 0, 0, videoElement.videoWidth, regionHeight);
+
+                try {
+                    // Barkodu canvas üzerinden çözmeyi dene
+                    const result = codeReader.decodeFromCanvas(canvasContext.canvas);
+                    if (result && result.getText()) {
+                        isScanning = false;
+                        handleBarcode(result.getText());
                     }
-
-                    // Sadece videonun ortasındaki %30'luk dikey alanı tara
-                    const regionHeight = videoElement.videoHeight * 0.3;
-                    const regionY = (videoElement.videoHeight / 2) - (regionHeight / 2);
-
-                    // O anki video karesinin ilgili bölgesini canvas'a çiz
-                    canvasContext.drawImage(videoElement, 0, regionY, videoElement.videoWidth, regionHeight, 0, 0, videoElement.videoWidth, regionHeight);
-
-                    try {
-                        // Barkodu canvas üzerinden çözmeyi dene
-                        const result = codeReader.decodeFromCanvas(canvasContext.canvas);
-                        if (result && result.getText()) {
-                            isScanning = false;
-                            handleBarcode(result.getText());
-                        }
-                    } catch (e) {
-                        // Barkod bulunamadığında oluşan hata normaldir, diğer hataları logla
-                        if (!(e instanceof ZXing.NotFoundException)) {
-                            console.error("Tarama Hatası:", e);
-                        }
+                } catch (e) {
+                    // Barkod bulunamadığında oluşan hata normaldir (NotFoundException)
+                    // Diğer beklenmedik hataları konsola yazdır
+                    if (!(e instanceof ZXing.NotFoundException)) {
+                        console.error("Tarama Hatası:", e);
                     }
+                }
 
-                    // Bir sonraki kareyi taramak için döngüyü devam ettir
-                    requestAnimationFrame(scanFrame);
-                };
-
-                // Tarama döngüsünü başlat
+                // Bir sonraki kareyi taramak için döngüyü devam ettir
                 requestAnimationFrame(scanFrame);
             };
-        }
+
+            // Tarama döngüsünü başlat
+            requestAnimationFrame(scanFrame);
+        };
     }
 
     // --- 5. Stok Sayım Mantığı ve Modal Yönetimi ---
