@@ -58,6 +58,13 @@
             justify-content: center;
             align-items: center;
             z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
         }
         .modal-content {
             background-color: white;
@@ -137,7 +144,7 @@
     </div>
 
     <!-- Miktar Giriş Modalı -->
-    <div id="quantity-modal" class="modal-overlay hidden">
+    <div id="quantity-modal" class="modal-overlay">
         <div class="modal-content">
             <h3 id="modal-product-name">Ürün Adı</h3>
             <p>Mevcut Miktar: <span id="modal-current-quantity">0</span> <span id="modal-product-unit">Birim</span></p>

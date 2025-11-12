@@ -153,12 +153,12 @@ document.addEventListener('DOMContentLoaded', () => {
         modalCurrentQuantity.textContent = currentQuantity;
 
         quantityInput.value = ''; // Giriş alanını temizle
-        modal.classList.remove('hidden');
+        modal.classList.add('visible');
         quantityInput.focus(); // Sayı giriş alanına otomatik odaklan
     }
 
     function closeQuantityModal() {
-        modal.classList.add('hidden');
+        modal.classList.remove('visible');
         currentProduct = null;
         // Taramanın yeniden başlaması için bir bekleme süresi
         setTimeout(() => { isScanning = true; }, 500);
